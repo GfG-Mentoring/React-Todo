@@ -3,9 +3,9 @@ import './App.css';
 import { TodoCard } from './components/TodoCard';
 import { TodoContext } from './providers/TodoContext';
 import Login from './Login';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { api } from './api';
-import { removeAuth } from './store/authSlice';
+import { AuthContext } from './providers/AuthContent';
 
 function TodoPage() {
   const [newTodo, setTodo] = useState('');
@@ -15,21 +15,27 @@ function TodoPage() {
 
   const fetchTodos = async () => {
     try {
-      const data = await api.get('/todo');
-      setMyTodos([
-        ...(data?.data?.data?.map((todo) => ({
-          todo: todo.title,
-          completed: todo.completed,
-          id: todo._id,
-        })) ?? []),
-      ]);
-      setIsLoadingTodos(false);
+      const data = await api.get('/todos');
+      console.log(data);
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
+
+    // try {
+    //   const data = await api.get('/todo');
+    //   setMyTodos([
+    //     ...(data?.data?.data?.map((todo) => ({
+    //       todo: todo.title,
+    //       completed: todo.completed,
+    //       id: todo._id,
+    //     })) ?? []),
+    //   ]);
+    //   setIsLoadingTodos(false);
+    // } catch (err) {
+    //   console.error(err);
+    // }
   };
 
-  console.log('hererere');
   useEffect(() => {
     fetchTodos();
   }, []);
@@ -50,7 +56,7 @@ function TodoPage() {
     setTodo('');
   };
 
-  const dispatch = useDispatch();
+  return <div>TODO PAGE.</div>;
 
   if (isLoadingTodos) {
     return <div>Loading</div>;
@@ -60,7 +66,7 @@ function TodoPage() {
     <>
       <button
         onClick={() => {
-          dispatch(removeAuth());
+          // dispatch(removeAuth());
         }}
       >
         log out{' '}
@@ -104,11 +110,15 @@ function TodoPage() {
 export { TodoPage };
 
 export default function App() {
-  const authData = useSelector((state: any) => state.auth);
+  const [authInfo] = useContext(AuthContext);
 
   useEffect(() => {
-    api.defaults.headers.common['Authorization'] = `Bearer ${authData?.token}`;
-  }, [authData]);
+    if (authInfo.isLoggedIn) {
+      api.defaults.headers.common[
+        'Authorization'
+      ] = `Bearer ${authInfo?.accessToken}`;
+    }
+  }, [authInfo]);
 
-  return authData?.isLoggedIn ? <TodoPage /> : <Login />;
+  return authInfo?.isLoggedIn ? <TodoPage /> : <Login />;
 }

@@ -1,41 +1,37 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { api } from './api';
-import { useDispatch } from 'react-redux';
-import { setAuth } from './store/authSlice';
+import { AuthContext } from './providers/AuthContent';
 
 const Login = () => {
+  const [authInfo, setAuthInfo] = useContext(AuthContext);
+
   const [loginCreds, setLoginCreds] = useState<{
     email: string;
     password: string;
   }>({
-    email: 'ashKetchum@pokemon.com',
-    password: 'GottaCatchEmAll',
+    email: 'shikhar@gmail.com',
+    password: 'banaman',
   });
 
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const dispatch = useDispatch();
-
   const loginUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // validation block
-    if (!loginCreds.email.length || !loginCreds.password.length) {
-      setErrorMessage('Please enter valid credentials.');
-      return;
-    }
-
-    setErrorMessage('');
-
-    console.log({ ...loginCreds });
-
+    // make the api call to login user
     try {
-      const data = await api.post('/auth/login', loginCreds);
-      const loginData = data?.data?.data?.data;
-      dispatch(setAuth(loginData));
+      const response = await api.post('/login', {
+        email: loginCreds.email,
+        password: loginCreds.password,
+      });
+
+      if (response.data.data.accessToken) {
+        localStorage.setItem('auth', JSON.stringify(response.data.data));
+        setAuthInfo({ ...response.data.data, isLoggedIn: true });
+      }
     } catch (err) {
       console.log(err);
-      setErrorMessage('Error occured while logging.');
+      setErrorMessage(err?.response?.data?.message);
     }
   };
 
